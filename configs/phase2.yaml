@@ -1,0 +1,88 @@
+# Phase 2 — Alpha generation and risk engine
+# Extends Phase 1; market_data / pair_discovery / hedging inherited via merge.
+
+include_phase1: configs/phase1.yaml
+
+ou:
+  # Minimum observations for exact-time MLE
+  min_obs: 50
+  # Parameter bounds (theta speed, mu level, sigma diffusion)
+  theta_min: 1.0e-6
+  theta_max: 50.0
+  sigma_min: 1.0e-8
+  sigma_max: 10.0
+  # Optimizer
+  max_iter: 500
+  gtol: 1.0e-8
+  # Stationarity / half-life gates (time units of dt)
+  require_stationary: true
+  half_life_min: 0.5
+  half_life_max: 500.0
+  # Residual whiteness significance
+  residual_ljung_box_alpha: 0.01
+  # Confidence level for Wald intervals
+  conf_level: 0.95
+
+spread:
+  # Z-score entry / exit (hysteresis: entry > exit)
+  entry_z: 2.0
+  exit_z: 0.5
+  # Neutral band inside exit (optional soft flatten)
+  neutral_z: 0.25
+  # Rolling normalization window (bars); 0 disables rolling z
+  rolling_window: 60
+  # Prefer model-based z from OU stationary distribution when calibrated
+  use_model_z: true
+  # Maximum bars to hold a position
+  max_holding_bars: 100
+  # Minimum bars between opposite flips (extra hysteresis)
+  min_bars_between_flips: 3
+  # Warmup bars before signals are eligible (causal)
+  warmup_bars: 30
+
+costs:
+  maker_fee_bps: 1.0
+  taker_fee_bps: 3.0
+  # Assume taker unless flagged maker
+  default_is_maker: false
+  # Half bid-ask spread in bps of notional (per leg)
+  bid_ask_spread_bps: 2.0
+  # Baseline slippage bps; scales with size via impact
+  slippage_bps: 1.0
+  # Linear temporary impact: impact_bps = impact_coeff * (size / adv)
+  impact_coeff_bps: 5.0
+  # Borrow cost annualized (short leg); applied pro-rata over holding
+  borrow_rate_annual: 0.02
+  # Funding rate annualized (perp-style); 0 disables
+  funding_rate_annual: 0.0
+  # Latency cost proxy in bps (adverse selection / delay)
+  latency_bps: 0.5
+  # Bars per year for holding-cost accrual
+  bars_per_year: 252.0
+  # Minimum expected net edge (in price units of spread) to allow entry
+  min_net_edge: 0.0
+  # Number of legs in the pair trade (y and x)
+  n_legs: 2
+
+risk:
+  # Target annualized vol for position sizing (spread units / sqrt(year))
+  target_vol: 0.10
+  # Caps
+  max_gross_exposure: 1.0e6
+  max_net_exposure: 5.0e5
+  max_pair_inventory: 1.0e5
+  max_portfolio_pairs: 10
+  # Drawdown / stop
+  max_drawdown: 0.10
+  stop_loss: 0.05
+  # Spread collapse: |z| drops below this while holding with PnL blow-up OR
+  # residual variance collapses relative to calibration
+  spread_collapse_z: 0.05
+  spread_collapse_var_ratio: 0.05
+  # Model instability: OU theta relative drop or Kalman divergence flag
+  theta_instability_ratio: 0.25
+  # Kill switch trips on hard limit breach
+  enable_kill_switch: true
+
+paths:
+  results_dir: results/phase2

@@ -1,0 +1,81 @@
+# Phase 1 — Quant Research Engine configuration
+# All analytics parameters are centralized here for reproducibility.
+
+market_data:
+  # Expected L2 depth (levels on each side)
+  book_depth: 10
+  # Maximum allowed sequence gap before forcing snapshot recovery
+  max_sequence_gap: 1
+  # Volume-bar target notional (shares / contracts)
+  volume_bar_size: 1000.0
+  # Timestamp unit of incoming data: ns | us | ms | s
+  timestamp_unit: ns
+  # Drop updates older than this relative to last accepted (ns); 0 disables
+  max_out_of_order_ns: 0
+  # Levels used for imbalance / micro-price aggregation
+  top_n_levels: 5
+
+pair_discovery:
+  # Minimum observations for cointegration tests
+  min_obs: 100
+  # ADF significance level (null: unit root)
+  adf_significance: 0.05
+  # Engle-Granger residual ADF significance
+  eg_significance: 0.05
+  # Johansen significance level for trace / max-eigen
+  johansen_significance: 0.05
+  # Deterministic trend specification for Johansen: const | trend | none
+  johansen_det_order: const
+  # Number of lags for Johansen (0 = AIC selection up to max_lags)
+  johansen_k_ar_diff: 1
+  johansen_max_lags: 5
+  # Rolling stability window and step
+  rolling_window: 252
+  rolling_step: 21
+  # Minimum fraction of rolling windows that must reject no-cointegration
+  min_stability_ratio: 0.60
+  # Multiple-testing method: bonferroni | benjamini_hochberg | none
+  multiple_testing: benjamini_hochberg
+  # FDR / FWER target
+  fdr_alpha: 0.05
+  # Half-life bounds (bars) for admissible mean-reverting spreads
+  half_life_min: 1.0
+  half_life_max: 100.0
+
+hedging:
+  # Initial state covariance diagonal (intercept, hedge ratio)
+  initial_P_diag: [1.0e4, 1.0e2]
+  # Observation noise variance
+  observation_noise: 1.0e-4
+  # Base process-noise diagonal
+  process_noise_diag: [1.0e-6, 1.0e-7]
+  # Enable adaptive process noise from innovation magnitude
+  adaptive_process_noise: true
+  # Adaptive scale: Q <- Q * (1 + kappa * standardized_innovation^2)
+  adaptive_kappa: 0.05
+  # Divergence: consecutive |innovation| / sqrt(S) above threshold
+  divergence_z: 5.0
+  divergence_streak: 10
+  # NEES (normalized estimation error squared) soft upper bound for 2-state
+  nees_upper: 9.21  # chi2 0.99 df=2
+
+synthetic:
+  seed: 42
+  n_bars: 2000
+  n_book_events: 5000
+  cointegration_strength: 0.15  # mean-reversion speed of spread
+  hedge_ratio_true: 1.25
+  intercept_true: 0.5
+  price_vol: 0.01
+  spread_vol: 0.002
+  tick_size: 0.01
+  lot_size: 1.0
+
+logging:
+  level: INFO
+  format: "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s"
+
+paths:
+  data_dir: data/synthetic
+  results_dir: results/phase1
+  benchmark_dir: benchmarks
